@@ -3,7 +3,8 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import pandas as pd
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
 
 class Net(nn.Module):
     def __init__(self, input_size, num_classes):
@@ -18,35 +19,74 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
-def train_model(X_train, y_train):
-    # Convert data to numpy arrays before creating tensors
-    X_train_array = X_train.to_numpy()
-    y_train_array = y_train.to_numpy()
-    
+def train_model(X_train, y_train, X_test, y_test, epochs):
+    # Convert data to NumPy arrays
+    X_train_np = X_train.to_numpy()
+    y_train_np = y_train.to_numpy()
+    X_test_np = X_test.to_numpy()
+    y_test_np = y_test.to_numpy()
+
     # Convert data to PyTorch tensors
-    X_train_tensor = torch.tensor(X_train_array, dtype=torch.float32)
-    y_train_tensor = torch.tensor(y_train_array, dtype=torch.long)
+    X_train_tensor = torch.tensor(X_train_np, dtype=torch.float32)
+    y_train_tensor = torch.tensor(y_train_np, dtype=torch.long)
+    X_test_tensor = torch.tensor(X_test_np, dtype=torch.float32)
+    y_test_tensor = torch.tensor(y_test_np, dtype=torch.long)
     
     # Create DataLoader
     train_dataset = torch.utils.data.TensorDataset(X_train_tensor, y_train_tensor)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True)
     
-    # Get the number of unique classes
-    num_classes = len(pd.unique(y_train))
+    # Determine the number of classes
+    num_classes = len(y_train.unique())
     
     # Initialize the model, loss function, and optimizer
     model = Net(X_train.shape[1], num_classes)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
+    # Initialize lists to store accuracy values
+    train_accuracies = []
+    test_accuracies = []
+    
     # Training loop
-    for epoch in range(20):  # Number of epochs
+    for epoch in range(epochs):  
+        model.train()  # Set the model to training mode
+        correct = 0
+        total = 0
         for inputs, labels in train_loader:
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-        print(f'Epoch {epoch+1}/{20}, Loss: {loss.item()}')
+            
+            # Calculate training accuracy
+            _, predicted = torch.max(outputs, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+        
+        train_accuracy = 100 * correct / total
+        train_accuracies.append(train_accuracy)
+
+        # Validation on test set
+        model.eval()  # Set the model to evaluation mode
+        with torch.no_grad():
+            test_outputs = model(X_test_tensor)
+            _, test_predicted = torch.max(test_outputs, 1)
+            test_accuracy = accuracy_score(y_test_tensor, test_predicted) * 100
+            test_accuracies.append(test_accuracy)
+        
+        print(f'Epoch {epoch+1}/{epochs}, Loss: {loss.item()}, Training Accuracy: {train_accuracy:.2f}%, Test Accuracy: {test_accuracy:.2f}%')
+    
+    # Plot the accuracies
+    plt.figure(figsize=(10, 5))
+    plt.plot(range(1, epochs + 1), train_accuracies, label='Training Accuracy')
+    plt.plot(range(1, epochs + 1), test_accuracies, label='Test Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy (%)')
+    plt.title('Training and Test Accuracy over Epochs')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
     
     return model, num_classes
