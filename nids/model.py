@@ -20,17 +20,21 @@ class Net(nn.Module):
         return x
 
 def train_model(X_train, y_train, X_test, y_test, epochs):
+    # Check for GPU availability
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'Training on device: {device}')
+
     # Convert data to NumPy arrays
     X_train_np = X_train.to_numpy()
     y_train_np = y_train.to_numpy()
     X_test_np = X_test.to_numpy()
     y_test_np = y_test.to_numpy()
 
-    # Convert data to PyTorch tensors
-    X_train_tensor = torch.tensor(X_train_np, dtype=torch.float32)
-    y_train_tensor = torch.tensor(y_train_np, dtype=torch.long)
-    X_test_tensor = torch.tensor(X_test_np, dtype=torch.float32)
-    y_test_tensor = torch.tensor(y_test_np, dtype=torch.long)
+    # Convert data to PyTorch tensors and move to device
+    X_train_tensor = torch.tensor(X_train_np, dtype=torch.float32).to(device)
+    y_train_tensor = torch.tensor(y_train_np, dtype=torch.long).to(device)
+    X_test_tensor = torch.tensor(X_test_np, dtype=torch.float32).to(device)
+    y_test_tensor = torch.tensor(y_test_np, dtype=torch.long).to(device)
     
     # Create DataLoader
     train_dataset = torch.utils.data.TensorDataset(X_train_tensor, y_train_tensor)
@@ -40,7 +44,7 @@ def train_model(X_train, y_train, X_test, y_test, epochs):
     num_classes = len(y_train.unique())
     
     # Initialize the model, loss function, and optimizer
-    model = Net(X_train.shape[1], num_classes)
+    model = Net(X_train.shape[1], num_classes).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
@@ -73,7 +77,7 @@ def train_model(X_train, y_train, X_test, y_test, epochs):
         with torch.no_grad():
             test_outputs = model(X_test_tensor)
             _, test_predicted = torch.max(test_outputs, 1)
-            test_accuracy = accuracy_score(y_test_tensor, test_predicted) * 100
+            test_accuracy = accuracy_score(y_test_tensor.cpu(), test_predicted.cpu()) * 100
             test_accuracies.append(test_accuracy)
         
         print(f'Epoch {epoch+1}/{epochs}, Loss: {loss.item()}, Training Accuracy: {train_accuracy:.2f}%, Test Accuracy: {test_accuracy:.2f}%')
@@ -87,6 +91,7 @@ def train_model(X_train, y_train, X_test, y_test, epochs):
     plt.title('Training and Test Accuracy over Epochs')
     plt.legend()
     plt.grid(True)
+    plt.savefig('nids/training_test_accuracy.png')  # Save the plot as a PNG file
     plt.show()
     
     return model, num_classes
