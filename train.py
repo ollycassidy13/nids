@@ -19,13 +19,5 @@ if __name__ == '__main__':
     torch.save(model.state_dict(), 'nids/model.pth')
     with open('nids/scaler.pkl', 'wb') as f:
         pickle.dump(scaler, f)
-    
-    # Save number of features and classes
-    with open('nids/model_metadata.pkl', 'wb') as f:
-        metadata = {
-            'num_features': X_train.shape[1],
-            'num_classes': num_classes
-        }
-        pickle.dump(metadata, f)
 
-    print("Model, scaler, and metadata (number of features and classes) saved.")
+    print("Model and scaler saved.")
