@@ -8,7 +8,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from nids.model import Net
+from nids import Net
 
 def load_and_preprocess_data(file_path):
     data = pd.read_csv(file_path)

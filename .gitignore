@@ -1,2 +1,8 @@
 nids/__pycache__
 dataset/MachineLearningCVE
+nids_logs.log
+packet_sniffer.log
+nids/model_metadata.pkl
+nids/model.pth
+nids/scaler.pkl
+nids/training_test_accuracy.png
