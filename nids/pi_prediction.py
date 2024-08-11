@@ -45,9 +45,9 @@ def preprocess_packet(packet, scaler):
     return torch.tensor(scaled_data, dtype=torch.float32), features, src_ip, dst_ip
 
 # Define the GPIO pin numbers for the LEDs
-GREEN_LED_PIN = 17
-RED_LED_PIN = 27
-ORANGE_LED_PIN = 22
+GREEN_LED_PIN = 27
+RED_LED_PIN = 22
+ORANGE_LED_PIN = 23
 
 # Setup GPIO mode and pins
 GPIO.setmode(GPIO.BCM)
